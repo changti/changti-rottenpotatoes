@@ -9,27 +9,27 @@ class MoviesController < ApplicationController
   def index
 	@all_ratings = Movie.ratings
 	@order = params[:order]
+    @filtered_ratings = Array.new
+    @ratings_hash = Hash.new
 
-	if params[:order] != nil
-		session[:order] = params[:order]
-	end
+    if (params[:order]) != nil
+      session[:order] = params[:order]
+    end
 
-	if params[:ratings] != nil
-		session[:ratings] = params[:ratings]
-		flash.keep
-		redirect_to movies_path({:order => @order, :ratings => @ratings})
-	end
-
-	@ratings = params[:ratings]
-
-	if @order == "title"
-		@movies = Movie.find(:all, :order => "title")  
-	elsif @order == "release_date"
-		@movies = Movie.find(:all, :order => "release_date")			
-	else
-		@movies = @ratings.nil? ? Movie.all : Movie.find_all_by_rating(@ratings.map {|r| r[0]})
-	end
-
+    if (params[:ratings]) != nil
+       params[:ratings].each_key { |r| @filtered_ratings.push(r); @ratings_hash[r] = r; }
+		if @order == "title"
+			@movies = Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => "title")
+		elsif @order == "release_date"
+			@movies = Movie.find(:all, :conditions => {:rating => @filtered_ratings},  :order => "release_date")	
+		else
+			@movies = @filtered_ratings.nil? ? Movie.all : Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order=>@order)
+		end
+       session[:ratings] = @ratings_hash
+    elsif (session[:ratings])
+         flash.keep
+         redirect_to movies_path(:order=>session[:order], :ratings=>session[:ratings])
+    end
   end
 
   def new
