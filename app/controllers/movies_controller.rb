@@ -7,30 +7,34 @@ class MoviesController < ApplicationController
   end
 
   def index
-	@all_ratings = Movie.ratings
-	@order = params[:order]
-    @filtered_ratings = Array.new
-    @ratings_hash = Hash.new
+	@all_ratings = Movie.ratings    
+    
 
-    if (params[:order]) != nil
-      session[:order] = params[:order]
+    # First step: update session
+    
+    if params[:ratings].nil?
+        @filtered_ratings = @all_ratings
+    else
+        @filtered_ratings = params[:ratings].keys
+        session[:ratings] = params[:ratings]
     end
-
-    if (params[:ratings])
-       params[:ratings].each_key { |r| @filtered_ratings.push(r); @ratings_hash[r] = r; }
-		if @order == "title"
-			@movies = Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => "title")
-		elsif @order == "release_date"
-			@movies = Movie.find(:all, :conditions => {:rating => @filtered_ratings},  :order => "release_date")	
-		else
-			@movies = @filtered_ratings.nil? ? Movie.all : Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => @order)
-		end
-       session[:ratings] = @ratings_hash
-    elsif (session[:ratings])
-		flash.keep
-        #redirect_to movies_path(:order=>session[:order], :ratings=>session[:ratings])
-		#@movies = @filtered_ratings.nil? ? Movie.all : Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => @order)
-		@movies = Movie.all
+    
+    if params[:order].nil?
+        @order = session[:order] # could be nil
+    else
+        @order = params[:order]
+        session[:order] = @order
+    end
+    # AT THIS POINT IN THE CODE, WE SHOULD HAVE @filtered_ratings hold the ratings we want to display
+    # and @order should be set to the field we want to sort by.
+    # We should also have have options stored inside session correctly.
+    
+    if params[:ratings].nil? and params[:order].nil? and (!session[:ratings].nil? or !session[:order].nil?)
+		puts 'REDIRECTED'
+        flash.keep
+        redirect_to movies_path(:order => session[:order], :ratings => session[:ratings])
+    else 
+        @movies = Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => @order)
     end
   end
 
@@ -59,7 +63,7 @@ class MoviesController < ApplicationController
     @movie = Movie.find(params[:id])
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
-    #redirect_to movies_path
+    redirect_to movies_path
   end
 
 end
