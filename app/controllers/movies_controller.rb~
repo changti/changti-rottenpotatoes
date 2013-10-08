@@ -25,13 +25,10 @@ class MoviesController < ApplicationController
 		else
 			@movies = @filtered_ratings.nil? ? Movie.all : Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => @order)
 		end
-       #@movies = Movie.find(:all, :order=>@order, :conditions => {:rating => @filtered_ratings})
        session[:ratings] = @ratings_hash
     elsif (session[:ratings])
          flash.keep
-         redirect_to movies_path(:order=>session[:order], :ratings=>session[:ratings])
-		#end
-		#@movies = Movie.all(:order=>@order)
+         #redirect_to movies_path(:order=>session[:order], :ratings=>session[:ratings])
 		@movies = @filtered_ratings.nil? ? Movie.all : Movie.find(:all, :conditions => {:rating => @filtered_ratings}, :order => @order)
     end
   end
@@ -61,7 +58,7 @@ class MoviesController < ApplicationController
     @movie = Movie.find(params[:id])
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
-    redirect_to movies_path
+    #redirect_to movies_path
   end
 
 end
